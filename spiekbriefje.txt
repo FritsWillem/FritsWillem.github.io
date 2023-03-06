@@ -1,0 +1,4 @@
+
+Windows command prompt
+
+netstat		welke poorten zijn in gebruik

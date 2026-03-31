@@ -2,150 +2,240 @@
 <html lang="nl">
 <head>
   <meta charset="UTF-8" />
-  <title>Flashcards EN-NL</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Flashcards EN-NL / NL-EN</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       text-align: center;
       background: #f4f4f4;
-      padding: 40px;
+      padding: 32px 16px;
     }
-    .card {
-      background: white;
-      width: 360px;
-      margin: 0 auto 14px;
-      padding: 28px 24px;
-      border-radius: 10px;
-      font-size: 22px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.10);
-      cursor: pointer;
-      user-select: none;
-      line-height: 1.35;
+    .container {
+      max-width: 520px;
+      margin: 0 auto;
     }
+    h1 { margin-top: 0; }
     .meta {
       color: #666;
       font-size: 14px;
-      margin-bottom: 18px;
+      margin: 8px 0 18px;
+      line-height: 1.4;
     }
-    button {
-      padding: 10px 18px;
+    .controls {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    select, button {
+      padding: 10px 12px;
       font-size: 16px;
       cursor: pointer;
-      margin: 0 6px;
+    }
+    .card {
+      background: white;
+      margin: 0 auto 14px;
+      padding: 28px 20px;
+      border-radius: 12px;
+      font-size: 24px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.10);
+      cursor: pointer;
+      user-select: none;
+      line-height: 1.35;
+      min-height: 110px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .statusline {
+      color: #444;
+      font-size: 14px;
+      margin-top: 8px;
+    }
+    .hint {
+      font-size: 12px;
+      color: #777;
+      margin-top: 4px;
+    }
+    kbd {
+      background: #eee;
+      border-radius: 4px;
+      padding: 2px 6px;
+      border: 1px solid #ddd;
+      font-size: 12px;
     }
   </style>
 </head>
 <body>
+  <div class="container">
+    <h1>📘 Flashcards</h1>
 
-  <h1>📘 Flashcards (Engels → Nederlands)</h1>
-  <div class="meta">
-    Klik op de kaart om te flippen. Gebruik Volgende/Vorige om te navigeren.
-  </div>
+    <div class="meta">
+      Kies de richting: <b>Engels → Nederlands</b> of <b>Nederlands → Engels</b>.<br/>
+      Klik op de kaart om te flippen.
+    </div>
 
-  <div class="card" onclick="flipCard()">
-    <div id="cardText">insurance</div>
-  </div>
+    <div class="controls">
+      <select id="direction" onchange="setDirection(this.value)">
+        <option value="EN_NL">Engels → Nederlands</option>
+        <option value="NL_EN">Nederlands → Engels</option>
+      </select>
 
-  <div>
-    <button onclick="prevCard()">Vorige</button>
-    <button onclick="nextCard()">Volgende</button>
-    <button onclick="shuffleCards()">Shuffle</button>
+      <button onclick="prevCard()">Vorige</button>
+      <button onclick="nextCard()">Volgende</button>
+      <button onclick="shuffleCards()">Shuffle</button>
+      <button onclick="resetOrder()">Reset</button>
+    </div>
+
+    <div class="card" onclick="flipCard()" title="Klik om te flippen">
+      <div id="cardText">insurance</div>
+    </div>
+
+    <div class="statusline" id="statusLine"></div>
+    <div class="hint">
+      Sneltoetsen: <kbd>Spatie</kbd> flip • <kbd>←</kbd> vorige • <kbd>→</kbd> volgende
+    </div>
   </div>
 
   <script>
-    // Woordenlijst uit de foto (1312 t/m 1363)
-    const cards = [
-      { question: "insurance",      answer: "verzekering" },
-      { question: "nurse",          answer: "verpleegster; verpleegkundige" },
-      { question: "to divide",      answer: "verdelen" },
-      { question: "length",         answer: "lengte" },
-      { question: "investigation",  answer: "onderzoek" },
-      { question: "package",        answer: "pakket" },
-      { question: "somewhere",      answer: "ergens" },
-      { question: "to expand",      answer: "uitbreiden" },
-      { question: "to commit",      answer: "begaan" },
-      { question: "obvious",        answer: "voor de hand liggend" },
-      { question: "to jump",        answer: "springen" },
-      { question: "weapon",         answer: "wapen" },
-      { question: "relatively",     answer: "naar verhouding" },
-      { question: "host",           answer: "gastheer" },
-      { question: "winter",         answer: "winter" },
-      { question: "district",       answer: "wijk; gebied" },
-      { question: "broad",          answer: "breed" },
-      { question: "tire",           answer: "band" },
-      { question: "spring",         answer: "lente" },
-      { question: "spirit",         answer: "geest" },
-      { question: "lunch",          answer: "lunch" },
-      { question: "actual",         answer: "actueel; eigenlijk; werkelijk" },
-      { question: "pool",           answer: "zwembad" },
-      { question: "battle",         answer: "strijd" },
-      { question: "tradition",      answer: "traditie" },
-      { question: "cash",           answer: "contant geld" },
+    // Basiswoordenlijst (zelfde als in jouw voorbeeld)
+    // We bewaren elk item als EN + NL, zodat we eenvoudig kunnen wisselen van richting.
+    const baseCards = [
+      { en: "insurance",      nl: "verzekering" },
+      { en: "nurse",          nl: "verpleegster; verpleegkundige" },
+      { en: "to divide",      nl: "verdelen" },
+      { en: "length",         nl: "lengte" },
+      { en: "investigation",  nl: "onderzoek" },
+      { en: "package",        nl: "pakket" },
+      { en: "somewhere",      nl: "ergens" },
+      { en: "to expand",      nl: "uitbreiden" },
+      { en: "to commit",      nl: "begaan" },
+      { en: "obvious",        nl: "voor de hand liggend" },
+      { en: "to jump",        nl: "springen" },
+      { en: "weapon",         nl: "wapen" },
+      { en: "relatively",     nl: "naar verhouding" },
+      { en: "host",           nl: "gastheer" },
+      { en: "winter",         nl: "winter" },
+      { en: "district",       nl: "wijk; gebied" },
+      { en: "broad",          nl: "breed" },
+      { en: "tire",           nl: "band" },
+      { en: "spring",         nl: "lente" },
+      { en: "spirit",         nl: "geest" },
+      { en: "lunch",          nl: "lunch" },
+      { en: "actual",         nl: "actueel; eigenlijk; werkelijk" },
+      { en: "pool",           nl: "zwembad" },
+      { en: "battle",         nl: "strijd" },
+      { en: "tradition",      nl: "traditie" },
+      { en: "cash",           nl: "contant geld" },
 
-      { question: "hardly",         answer: "nauwelijks" },
-      { question: "award",          answer: "prijs" },
-      { question: "coach",          answer: "trainer" },
-      { question: "experiment",     answer: "experiment" },
-      { question: "consideration",  answer: "overweging" },
-      { question: "strange",        answer: "vreemd" },
-      { question: "code",           answer: "code" },
-      { question: "possibly",       answer: "mogelijk" },
-      { question: "threat",         answer: "bedreiging" },
-      { question: "accident",       answer: "ongeluk" },
-      { question: "impossible",     answer: "onmogelijk" },
-      { question: "revenue",        answer: "omzet" },
-      { question: "to enable",      answer: "mogelijk maken" },
-      { question: "afraid",         answer: "bang" },
-      { question: "active",         answer: "actief" },
-      { question: "to conclude",    answer: "concluderen" },
-      { question: "religious",      answer: "religieus; godsdienstig" },
-      { question: "cancer",         answer: "kanker" },
-      { question: "to convince",    answer: "overtuigen" },
-      { question: "to vary",        answer: "variëren" },
-      { question: "environmental",  answer: "milieu" },
-      { question: "sun",            answer: "zon" },
-      { question: "healthy",        answer: "gezond" },
-      { question: "to blow",        answer: "blazen; waaien" },
-      { question: "volume",         answer: "volume" },
-      { question: "location",       answer: "plaats" }
+      { en: "hardly",         nl: "nauwelijks" },
+      { en: "award",          nl: "prijs" },
+      { en: "coach",          nl: "trainer" },
+      { en: "experiment",     nl: "experiment" },
+      { en: "consideration",  nl: "overweging" },
+      { en: "strange",        nl: "vreemd" },
+      { en: "code",           nl: "code" },
+      { en: "possibly",       nl: "mogelijk" },
+      { en: "threat",         nl: "bedreiging" },
+      { en: "accident",       nl: "ongeluk" },
+      { en: "impossible",     nl: "onmogelijk" },
+      { en: "revenue",        nl: "omzet" },
+      { en: "to enable",      nl: "mogelijk maken" },
+      { en: "afraid",         nl: "bang" },
+      { en: "active",         nl: "actief" },
+      { en: "to conclude",    nl: "concluderen" },
+      { en: "religious",      nl: "religieus; godsdienstig" },
+      { en: "cancer",         nl: "kanker" },
+      { en: "to convince",    nl: "overtuigen" },
+      { en: "to vary",        nl: "variëren" },
+      { en: "environmental",  nl: "milieu" },
+      { en: "sun",            nl: "zon" },
+      { en: "healthy",        nl: "gezond" },
+      { en: "to blow",        nl: "blazen; waaien" },
+      { en: "volume",         nl: "volume" },
+      { en: "location",       nl: "plaats" }
     ];
 
+    // We werken met een 'deck' (kopie) zodat we kunnen shufflen zonder baseCards te verliezen.
+    let deck = [...baseCards];
     let index = 0;
-    let showingQuestion = true;
+    let showingFront = true;
+
+    // Richting: EN_NL (front=EN back=NL) of NL_EN (front=NL back=EN)
+    let direction = "EN_NL";
+
+    const cardTextEl = document.getElementById("cardText");
+    const statusLineEl = document.getElementById("statusLine");
+    const directionEl = document.getElementById("direction");
+
+    function frontText(card) {
+      return direction === "EN_NL" ? card.en : card.nl;
+    }
+
+    function backText(card) {
+      return direction === "EN_NL" ? card.nl : card.en;
+    }
+
+    function updateStatus() {
+      const total = deck.length;
+      const dirLabel = direction === "EN_NL" ? "Engels → Nederlands" : "Nederlands → Engels";
+      statusLineEl.textContent = `${dirLabel} • kaart ${index + 1} van ${total}`;
+    }
 
     function renderCard() {
-      document.getElementById("cardText").textContent = cards[index].question;
-      showingQuestion = true;
+      showingFront = true;
+      cardTextEl.textContent = frontText(deck[index]);
+      updateStatus();
     }
 
     function flipCard() {
-      const el = document.getElementById("cardText");
-      el.textContent = showingQuestion ? cards[index].answer : cards[index].question;
-      showingQuestion = !showingQuestion;
+      const card = deck[index];
+      cardTextEl.textContent = showingFront ? backText(card) : frontText(card);
+      showingFront = !showingFront;
     }
 
     function nextCard() {
-      index = (index + 1) % cards.length;
+      index = (index + 1) % deck.length;
       renderCard();
     }
 
     function prevCard() {
-      index = (index - 1 + cards.length) % cards.length;
+      index = (index - 1 + deck.length) % deck.length;
       renderCard();
     }
 
     function shuffleCards() {
-      for (let i = cards.length - 1; i > 0; i--) {
+      for (let i = deck.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [cards[i], cards[j]] = [cards[j], cards[i]];
+        [deck[i], deck[j]] = [deck[j], deck[i]];
       }
       index = 0;
       renderCard();
     }
 
-    // Start
+    function resetOrder() {
+      deck = [...baseCards];
+      index = 0;
+      renderCard();
+    }
+
+    function setDirection(newDir) {
+      direction = newDir;
+      renderCard(); // zorgt dat de kaart meteen in de juiste taal start
+    }
+
+    // Keyboard support
+    document.addEventListener("keydown", (e) => {
+      if (e.code === "Space") { e.preventDefault(); flipCard(); }
+      if (e.code === "ArrowRight") nextCard();
+      if (e.code === "ArrowLeft") prevCard();
+    });
+
+    // Init
+    directionEl.value = direction;
     renderCard();
   </script>
-
 </body>
 </html>

@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tekenraster</title>
+  <style>
+    :root {
+      --cols: 32;         /* aantal kolommen */
+      --rows: 20;         /* aantal rijen */
+      --cell: 22px;       /* grootte van een vakje */
+      --gap: 2px;         /* ruimte tussen vakjes */
+      --light: #f2f2f2;   /* kleur uit */
+      --dark: #222;       /* kleur aan */
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: #ffffff;
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+    }
+
+    /* container met raster */
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(var(--cols), var(--cell));
+      grid-template-rows: repeat(var(--rows), var(--cell));
+      gap: var(--gap);
+      padding: 12px;
+      background: #ddd;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.12);
+      user-select: none;
+      touch-action: none; /* voorkomt scroll/zoom bij tekenen op mobiel */
+    }
+
+    .cell {
+      width: var(--cell);
+      height: var(--cell);
+      background: var(--light);
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .cell.on {
+      background: var(--dark);
+    }
+
+    /* klein hulppaneeltje */
+    .toolbar {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      background: rgba(255,255,255,.9);
+      border: 1px solid #e6e6e6;
+      border-radius: 12px;
+      padding: 8px 10px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.08);
+      backdrop-filter: blur(6px);
+    }
+    button {
+      border: 1px solid #ddd;
+      background: white;
+      padding: 6px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    button:hover { background: #f7f7f7; }
+    .hint { font-size: 12px; color: #555; }
+  </style>
+</head>
+
+<body>
+  <div class="toolbar">
+    <button id="clearBtn">Wissen</button>
+    <span class="hint">Klik om te togglen • Sleep om te tekenen</span>
+  </div>
+
+  <div id="grid" aria-label="Tekenraster"></div>
+
+  <script>
+    const grid = document.getElementById("grid");
+    const clearBtn = document.getElementById("clearBtn");
+
+    // Raster-instellingen (moet overeenkomen met CSS vars)
+    const cols = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--cols"));
+    const rows = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--rows"));
+    const total = cols * rows;
+
+    // Maak cellen
+    for (let i = 0; i < total; i++) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      cell.dataset.index = i;
+      grid.appendChild(cell);
+    }
+
+    // Klik togglet een vakje aan/uit
+    grid.addEventListener("click", (e) => {
+      if (!e.target.classList.contains("cell")) return;
+      e.target.classList.toggle("on");
+    });
+
+    // (Optioneel maar handig) Slepen om te tekenen:
+    // muis ingedrukt = tekenen (aan zetten), rechterklik/alt = uitzetten
+    let drawing = false;
+    let drawMode = "on"; // "on" of "off"
+
+    const setCell = (el) => {
+      if (!el || !el.classList.contains("cell")) return;
+      if (drawMode === "on") el.classList.add("on");
+      else el.classList.remove("on");
+    };
+
+    grid.addEventListener("pointerdown", (e) => {
+      if (!e.target.classList.contains("cell")) return;
+      drawing = true;
+
+      // Als je start op een "aan" vakje, dan ga je wissen; anders ga je tekenen
+      drawMode = e.target.classList.contains("on") ? "off" : "on";
+      setCell(e.target);
+      grid.setPointerCapture(e.pointerId);
+    });
+
+    grid.addEventListener("pointermove", (e) => {
+      if (!drawing) return;
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      setCell(el);
+    });
+
+    grid.addEventListener("pointerup", () => {
+      drawing = false;
+    });
+
+    clearBtn.addEventListener("click", () => {
+      document.querySelectorAll(".cell.on").forEach(c => c.classList.remove("on"));
+    });
+  </script>
+</body>
+</html>

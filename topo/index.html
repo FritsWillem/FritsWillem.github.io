@@ -1,0 +1,754 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Topografie – Kaart Overhoor</title>
+  <style>
+    :root{
+      --bg:#0b1220; --card:#121a2a; --muted:#91a4c7; --text:#e9f0ff;
+      --good:#2ecc71; --bad:#ff5c6c; --accent:#5aa9ff; --border:#24314f;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; padding:18px;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      background: radial-gradient(1200px 700px at 20% 0%, #13203a 0%, var(--bg) 45%, #070b14 100%);
+    }
+    .wrap{max-width:1200px; margin:0 auto;}
+    header{display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; margin-bottom:12px;}
+    h1{font-size:18px; margin:0}
+    .sub{font-size:13px; color:var(--muted)}
+    .grid{display:grid; grid-template-columns: 1.25fr .75fr; gap:12px;}
+    @media (max-width:980px){ .grid{grid-template-columns:1fr;} }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    .row{display:flex; flex-wrap:wrap; gap:10px; align-items:center;}
+    label{font-size:13px; color:var(--muted)}
+    select, input[type="text"], button{
+      background:#0b1323; color:var(--text);
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:10px 12px;
+      font-size:14px;
+      outline:none;
+    }
+    input[type="text"]{width:100%}
+    button{cursor:pointer}
+    button.primary{border-color: rgba(90,169,255,.6); background: rgba(90,169,255,.12)}
+    button.good{border-color: rgba(46,204,113,.6); background: rgba(46,204,113,.12)}
+    button.bad{border-color: rgba(255,92,108,.6); background: rgba(255,92,108,.12)}
+    button.ghost{background: transparent}
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      font-size:12px; color:var(--muted);
+      border:1px solid var(--border); border-radius:999px;
+      padding:6px 10px; background: rgba(0,0,0,.15);
+    }
+    .kbd{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px;
+      padding:2px 6px; border:1px solid var(--border); border-radius:6px; background:#0b1323; color:var(--text);}
+
+    /* Map */
+    .mapWrap{
+      position:relative;
+      border:1px solid var(--border);
+      border-radius:12px;
+      overflow:hidden;
+      background:#070b14;
+      aspect-ratio: 1 / 1.25; /* past redelijk bij jouw foto; schaalt mee */
+      min-height: 420px;
+    }
+    .mapImg{
+      position:absolute; inset:0;
+      width:100%; height:100%;
+      object-fit:contain;
+      user-select:none;
+      pointer-events:none; /* klikken gaat naar overlay */
+      background:#070b14;
+    }
+    .overlay{
+      position:absolute; inset:0;
+      cursor:crosshair;
+    }
+    .marker{
+      position:absolute;
+      transform: translate(-50%, -50%);
+      width:28px; height:28px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.25);
+      background: rgba(11,19,35,.85);
+      display:flex; align-items:center; justify-content:center;
+      font-weight:700; font-size:12px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.35);
+      user-select:none;
+      touch-action:none;
+    }
+    .marker.known{border-color: rgba(46,204,113,.7); box-shadow: 0 0 0 3px rgba(46,204,113,.15);}
+    .marker.active{border-color: rgba(90,169,255,.8); box-shadow: 0 0 0 4px rgba(90,169,255,.15);}
+    .marker.missing{opacity:.18}
+    .mapHint{
+      position:absolute; left:10px; bottom:10px;
+      background: rgba(0,0,0,.45);
+      border:1px solid rgba(255,255,255,.12);
+      padding:8px 10px;
+      border-radius:10px;
+      font-size:12px; color:var(--muted);
+      max-width: 70%;
+    }
+
+    .big{font-size:26px; font-weight:800; margin:8px 0 8px 0}
+    .feedback{margin-top:10px; padding:10px 12px; border-radius:10px; border:1px solid var(--border); display:none;}
+    .feedback.good{border-color: rgba(46,204,113,.55); background: rgba(46,204,113,.10); display:block;}
+    .feedback.bad{border-color: rgba(255,92,108,.55); background: rgba(255,92,108,.10); display:block;}
+    .muted{color:var(--muted)}
+    .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:12px;}
+    @media (max-width:520px){ .stats{grid-template-columns:repeat(2,1fr);} }
+    .stat{border:1px solid var(--border); border-radius:12px; padding:10px; background: rgba(0,0,0,.15);}
+    .stat .n{font-size:20px; font-weight:800}
+    .stat .t{font-size:12px; color:var(--muted)}
+    .tiny{font-size:12px; color:var(--muted)}
+    .divider{height:1px; background:rgba(36,49,79,.9); margin:10px 0;}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Topografie – Overhoren met de kaart</h1>
+      <div class="sub">
+        Klik op een nummer op de kaart om te oefenen. Antwoord en druk <span class="kbd">Enter</span>.
+        Gebruik <b>Markers instellen</b> om één keer alle nummers te plaatsen.
+      </div>
+    </div>
+    <div class="row">
+      <span class="pill">Items: <b id="totalCount"></b></span>
+      <span class="pill">Gekend: <b id="knownCount"></b></span>
+      <span class="pill">Markers gezet: <b id="placedCount"></b></span>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- MAP -->
+    <section class="card">
+      <div class="row" style="justify-content:space-between; margin-bottom:10px;">
+        <div class="row">
+          <div>
+            <label for="mode">Modus</label><br/>
+            <select id="mode">
+              <option value="countryToCapital">Land → Hoofdstad</option>
+              <option value="capitalToCountry">Hoofdstad → Land</option>
+              <option value="mixed">Gemengd</option>
+            </select>
+          </div>
+          <div>
+            <label for="pool">Oefenset</label><br/>
+            <select id="pool">
+              <option value="all">Alles</option>
+              <option value="unknown">Alleen niet-gekend</option>
+              <option value="known">Alleen gekend</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <button class="ghost" id="randomBtn" title="Laat de app een willekeurig nummer kiezen">🎯 Random</button>
+          <button class="ghost" id="toggleEditBtn" title="Sleep markers om ze te verplaatsen">🧲 Sleep-modus</button>
+          <button class="primary" id="setupBtn" title="Klik alle nummers één voor één op de kaart">🧭 Markers instellen</button>
+        </div>
+      </div>
+
+      <div class="row" style="justify-content:space-between; margin-bottom:10px;">
+        <div class="row">
+          <button class="ghost" id="resetKnownBtn">Reset gekend</button>
+          <button class="ghost" id="resetMarkersBtn">Reset markers</button>
+          <button class="ghost" id="resetScoreBtn">Reset score</button>
+        </div>
+
+        <div class="row">
+          <label class="tiny">Kaart:</label>
+          <input type="file" id="mapFile" accept="image/*" style="max-width:240px;" />
+          <span class="tiny">(of gebruik <b>map.jpg</b> in dezelfde map)</span>
+        </div>
+      </div>
+
+      <div class="mapWrap" id="mapWrap">
+        <img class="mapImg" id="mapImg" alt="Wereldkaart" />
+        <div class="overlay" id="overlay" aria-label="Kaart overlay"></div>
+        <div class="mapHint" id="mapHint">
+          <b>Tip:</b> Klik op een nummer (marker) om te oefenen.<br/>
+          <span class="muted" id="hintLine"></span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="tiny">
+        <b>Sneltoetsen:</b> Enter = check • Esc = leegmaken • In instelmodus: klik op kaart om marker te plaatsen
+      </div>
+    </section>
+
+    <!-- QUIZ -->
+    <aside class="card">
+      <div class="row" style="justify-content:space-between;">
+        <div>
+          <b>Vraag</b>
+          <div class="sub">Klik op de kaart om een item te kiezen of gebruik Random.</div>
+        </div>
+        <span class="pill">Actief: <b id="activeLabel">—</b></span>
+      </div>
+
+      <div class="divider"></div>
+
+      <div id="qLabel" class="muted">Klik op een nummer op de kaart…</div>
+      <div id="prompt" class="big">—</div>
+
+      <div class="row">
+        <input id="answer" type="text" placeholder="Typ je antwoord…" autocomplete="off" />
+        <button class="primary" id="checkBtn">Check</button>
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <button class="good" id="knownBtn">✅ Ik ken deze</button>
+        <button class="ghost" id="showBtn">👁 Toon antwoord</button>
+        <button class="ghost" id="skipBtn">↪ Overslaan</button>
+      </div>
+
+      <div id="feedback" class="feedback"></div>
+
+      <div class="stats">
+        <div class="stat"><div class="n" id="streak">0</div><div class="t">Reeks goed</div></div>
+        <div class="stat"><div class="n" id="correct">0</div><div class="t">Goed</div></div>
+        <div class="stat"><div class="n" id="wrong">0</div><div class="t">Fout</div></div>
+        <div class="stat"><div class="n" id="remaining">0</div><div class="t">Over (set)</div></div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="tiny muted" id="setupStatus"></div>
+    </aside>
+  </div>
+</div>
+
+<script>
+(() => {
+  // === DATA (uit jouw lijst) ===
+  const DATA = [
+    { id: 1,  country: "Canada", capital: "Ottawa" },
+    { id: 2,  country: "Verenigde Staten", capital: "Washington" },
+    { id: 3,  country: "Mexico", capital: "Mexico-Stad" },
+    { id: 4,  country: "Brazilië", capital: "Brasilia" },
+    { id: 5,  country: "Peru", capital: "Lima" },
+    { id: 6,  country: "Chili", capital: "Santiago" },
+    { id: 7,  country: "Argentinië", capital: "Buenos Aires" },
+    { id: 8,  country: "Marokko", capital: "Rabat" },
+    { id: 9,  country: "Algerije", capital: "Algiers" },
+    { id: 10, country: "Libië", capital: "Tripoli" },
+    { id: 11, country: "Egypte", capital: "Cairo" },
+    { id: 12, country: "Mali", capital: "Bamako" },
+    { id: 13, country: "Soedan", capital: "Khartoum" },
+    { id: 14, country: "Zuid Sudan", capital: "Juba" },
+    { id: 15, country: "Ethiopië", capital: "Addis Abeba" },
+    { id: 16, country: "Nigeria", capital: "Abuja" },
+    { id: 17, country: "Democratische Republiek Congo", capital: "Kinshasa" },
+    { id: 18, country: "Kenia", capital: "Nairobi" },
+    { id: 19, country: "Tanzania", capital: "Dodoma" },
+    { id: 20, country: "Angola", capital: "Luanda" },
+    { id: 21, country: "Mozambique", capital: "Maputo" },
+    { id: 22, country: "Zuid-Afrika", capital: "Kaapstad / Pretoria" },
+    { id: 23, country: "Turkije", capital: "Ankara" },
+    { id: 24, country: "Israël", capital: "Jeruzalem" },
+    { id: 25, country: "Irak", capital: "Bagdad" },
+    { id: 26, country: "Saudi-Arabië", capital: "Riad" },
+    { id: 27, country: "Rusland", capital: "Moskou" },
+    { id: 28, country: "Oekraïne", capital: "Kiev" },
+    { id: 29, country: "India", capital: "New Delhi" },
+    { id: 30, country: "Thailand", capital: "Bangkok" },
+    { id: 31, country: "Indonesië", capital: "Jakarta" },
+    { id: 32, country: "Filipijnen", capital: "Manila" },
+    { id: 33, country: "China", capital: "Beijing" },
+    { id: 34, country: "Japan", capital: "Tokyo" },
+    { id: 35, country: "Australië", capital: "Canberra" },
+    { id: 36, country: "Nieuw-Zeeland", capital: "Wellington" },
+    { id: 37, country: "Iran", capital: "Teheran" }
+  ];
+
+  // === Storage keys ===
+  const KEY_KNOWN   = "topo_known_v2";
+  const KEY_MARKERS = "topo_markers_v2";
+  const KEY_MAPSRC  = "topo_mapsrc_hint"; // alleen een hint; we proberen map.jpg, anders file input
+
+  // === Helpers ===
+  const $ = (id) => document.getElementById(id);
+
+  const norm = (s) => (s || "")
+    .toString().trim().toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // accenten weg
+    .replace(/[’'`]/g, "")
+    .replace(/\s+/g, " ")
+    .replace(/\s*\/\s*/g, "/")
+    .replace(/\s*-\s*/g, "-");
+
+  const keyOf = (item) => String(item.id);
+
+  const loadSet = (k) => {
+    try { return new Set(JSON.parse(localStorage.getItem(k) || "[]")); }
+    catch { return new Set(); }
+  };
+  const saveSet = (k, set) => localStorage.setItem(k, JSON.stringify([...set]));
+
+  const loadObj = (k, fallback) => {
+    try { return JSON.parse(localStorage.getItem(k) || "null") ?? fallback; }
+    catch { return fallback; }
+  };
+  const saveObj = (k, obj) => localStorage.setItem(k, JSON.stringify(obj));
+
+  function getPoolItems(knownSet){
+    const pool = $("pool").value;
+    if (pool === "all") return DATA.slice();
+    if (pool === "known") return DATA.filter(x => knownSet.has(keyOf(x)));
+    return DATA.filter(x => !knownSet.has(keyOf(x)));
+  }
+
+  // === State ===
+  let knownSet = loadSet(KEY_KNOWN);
+  let markers  = loadObj(KEY_MARKERS, {}); // { "1": {x:12.3, y:45.6}, ... } in %
+  let score = { correct: 0, wrong: 0, streak: 0 };
+  let current = null;
+  let currentDirection = "countryToCapital";
+  let editMode = false;
+
+  // Setup wizard
+  let setupMode = false;
+  let setupIndex = 0;
+
+  // === Map load ===
+  const mapImg = $("mapImg");
+
+  async function tryLoadDefaultMap(){
+    // Probeer map.jpg in dezelfde map
+    return new Promise((resolve) => {
+      mapImg.onload = () => resolve(true);
+      mapImg.onerror = () => resolve(false);
+      mapImg.src = "map.jpg";
+    });
+  }
+
+  function setMapFromFile(file){
+    const url = URL.createObjectURL(file);
+    mapImg.src = url;
+    localStorage.setItem(KEY_MAPSRC, "file");
+  }
+
+  // === Markers render ===
+  function placedCount(){
+    return Object.keys(markers).length;
+  }
+
+  function renderTopCounts(){
+    $("totalCount").textContent = String(DATA.length);
+    $("knownCount").textContent = String(knownSet.size);
+    $("placedCount").textContent = String(placedCount()) + "/" + String(DATA.length);
+  }
+
+  function clearMarkerElements(){
+    const overlay = $("overlay");
+    [...overlay.querySelectorAll(".marker")].forEach(el => el.remove());
+  }
+
+  function renderMarkers(){
+    clearMarkerElements();
+    const overlay = $("overlay");
+
+    const activeId = current ? String(current.id) : null;
+
+    DATA.forEach(item => {
+      const id = String(item.id);
+      const pos = markers[id];
+      const m = document.createElement("div");
+      m.className = "marker";
+      m.dataset.id = id;
+      m.textContent = id;
+
+      if (!pos) m.classList.add("missing");
+      if (knownSet.has(id)) m.classList.add("known");
+      if (activeId === id) m.classList.add("active");
+
+      // position if available
+      if (pos){
+        m.style.left = pos.x + "%";
+        m.style.top  = pos.y + "%";
+      } else {
+        // fallback: park buiten beeld (maar zichtbaar als "missend" bij instellen)
+        m.style.left = "8%";
+        m.style.top  = (10 + (item.id % 20) * 4) + "%";
+      }
+
+      // Click behavior
+      m.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (setupMode) return; // instelmodus: plaatsen doe je door op overlay te klikken
+        setCurrentById(id);
+      });
+
+      // Drag behavior (editMode)
+      let dragging = false;
+      let pointerId = null;
+
+      m.addEventListener("pointerdown", (e) => {
+        if (!editMode) return;
+        if (!markers[id]) markers[id] = { x: 50, y: 50 };
+        dragging = true;
+        pointerId = e.pointerId;
+        m.setPointerCapture(pointerId);
+        e.preventDefault();
+      });
+
+      m.addEventListener("pointermove", (e) => {
+        if (!editMode || !dragging) return;
+        const rect = overlay.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top)  / rect.height) * 100;
+        markers[id] = { x: clamp(x, 0, 100), y: clamp(y, 0, 100) };
+        saveObj(KEY_MARKERS, markers);
+        m.style.left = markers[id].x + "%";
+        m.style.top  = markers[id].y + "%";
+        renderTopCounts();
+      });
+
+      m.addEventListener("pointerup", (e) => {
+        if (!editMode) return;
+        dragging = false;
+        pointerId = null;
+      });
+
+      overlay.appendChild(m);
+    });
+
+    renderTopCounts();
+    updateHintLine();
+  }
+
+  function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+
+  function updateHintLine(){
+    const mode = $("mode").value;
+    const pool = $("pool").value;
+    const parts = [];
+
+    parts.push(editMode ? "Sleep-modus: aan (sleep nummers naar juiste plek)." : "Sleep-modus: uit.");
+
+    if (setupMode){
+      const item = DATA[setupIndex];
+      parts.push(`Instellen: klik nu op de kaart waar nummer ${item.id} hoort (${item.country}).`);
+    } else {
+      parts.push(`Modus: ${mode === "mixed" ? "Gemengd" : (mode === "countryToCapital" ? "Land→Hoofdstad" : "Hoofdstad→Land")}.`);
+      parts.push(`Oefenset: ${pool === "all" ? "Alles" : (pool === "unknown" ? "Niet-gekend" : "Gekend")}.`);
+      parts.push(placedCount() < DATA.length ? "Tip: gebruik ‘Markers instellen’ om alle nummers exact te plaatsen." : "Alle markers zijn gezet ✅");
+    }
+
+    $("hintLine").textContent = parts.join("  ");
+  }
+
+  // === Quiz logic ===
+  function chooseDirection(){
+    const mode = $("mode").value;
+    if (mode === "mixed") return Math.random() < 0.5 ? "countryToCapital" : "capitalToCountry";
+    return mode;
+  }
+
+  function setCurrentById(id){
+    const item = DATA.find(x => String(x.id) === String(id));
+    if (!item) return;
+
+    // respect pool filter: if user selected "unknown" and it's known, show warning
+    const pool = $("pool").value;
+    if (pool === "unknown" && knownSet.has(String(item.id))) {
+      setFeedback("bad", `Dit item staat als <b>gekend</b> gemarkeerd. Zet Oefenset op <i>Alles</i> of haal “gekend” weg.`);
+      return;
+    }
+    if (pool === "known" && !knownSet.has(String(item.id))) {
+      setFeedback("bad", `Dit item is <b>niet</b> gemarkeerd als gekend. Zet Oefenset op <i>Alles</i> of markeer als gekend.`);
+      return;
+    }
+
+    current = item;
+    currentDirection = chooseDirection();
+
+    $("activeLabel").textContent = String(item.id);
+    if (currentDirection === "countryToCapital") {
+      $("qLabel").textContent = "Wat is de hoofdstad van:";
+      $("prompt").textContent = item.country;
+    } else {
+      $("qLabel").textContent = "Welk land hoort bij de hoofdstad:";
+      $("prompt").textContent = item.capital;
+    }
+
+    $("answer").value = "";
+    $("answer").focus();
+
+    renderMarkers();
+    updateStats();
+    clearFeedback();
+  }
+
+  function expectedCandidates(item){
+    const raw = (currentDirection === "countryToCapital") ? item.capital : item.country;
+    const candidates = new Set();
+    const full = raw.trim();
+    candidates.add(norm(full));
+
+    // Allow slash variants (Kaapstad / Pretoria)
+    full.split("/").map(s => s.trim()).filter(Boolean).forEach(p => candidates.add(norm(p)));
+
+    // Accept hyphen/space variants
+    [...candidates].forEach(c => {
+      candidates.add(norm(c.replace(/-/g, " ")));
+      candidates.add(norm(c.replace(/\s/g, "-")));
+    });
+
+    return candidates;
+  }
+
+  function checkAnswer(){
+    if (!current){
+      setFeedback("bad", "Klik eerst een nummer op de kaart (of druk op Random).");
+      return;
+    }
+    const user = norm($("answer").value);
+    if (!user){
+      setFeedback("bad", "Typ eerst een antwoord 🙂");
+      return;
+    }
+
+    const good = expectedCandidates(current);
+
+    const correctAnswer = (currentDirection === "countryToCapital") ? current.capital : current.country;
+
+    if (good.has(user)){
+      score.correct++;
+      score.streak++;
+      setFeedback("good", `✅ Goed! Antwoord: <b>${correctAnswer}</b>`);
+      // optioneel: automatisch volgende random
+      // setTimeout(() => pickRandom(), 450);
+    } else {
+      score.wrong++;
+      score.streak = 0;
+      setFeedback("bad", `❌ Niet helemaal.<br/>✅ Goed antwoord: <b>${correctAnswer}</b>`);
+    }
+    updateStats();
+  }
+
+  function showAnswer(){
+    if (!current){
+      setFeedback("bad", "Klik eerst een nummer op de kaart.");
+      return;
+    }
+    const correctAnswer = (currentDirection === "countryToCapital") ? current.capital : current.country;
+    score.streak = 0;
+    setFeedback("bad", `👁 Antwoord: <b>${correctAnswer}</b>`);
+    updateStats();
+  }
+
+  function markKnown(){
+    if (!current){
+      setFeedback("bad", "Klik eerst een nummer op de kaart.");
+      return;
+    }
+    const id = String(current.id);
+    knownSet.add(id);
+    saveSet(KEY_KNOWN, knownSet);
+    setFeedback("good", `⭐ Gemarkeerd als “gekend”: <b>${current.country}</b> — <b>${current.capital}</b>`);
+    renderMarkers();
+    renderTopCounts();
+  }
+
+  function skip(){
+    if (!current){
+      setFeedback("bad", "Klik eerst een nummer op de kaart.");
+      return;
+    }
+    score.streak = 0;
+    setFeedback("bad", "↪ Overgeslagen. Kies een ander nummer op de kaart (of Random).");
+    updateStats();
+  }
+
+  function pickRandom(){
+    const items = getPoolItems(knownSet);
+    if (!items.length){
+      setFeedback("bad", "Er zitten geen items in deze oefenset. Kies bij Oefenset iets anders.");
+      return;
+    }
+    const item = items[Math.floor(Math.random() * items.length)];
+    setCurrentById(String(item.id));
+  }
+
+  // === Feedback/stats ===
+  function setFeedback(kind, html){
+    const fb = $("feedback");
+    fb.className = "feedback " + kind;
+    fb.innerHTML = html;
+  }
+  function clearFeedback(){
+    const fb = $("feedback");
+    fb.className = "feedback";
+    fb.innerHTML = "";
+  }
+  function updateStats(){
+    $("correct").textContent = String(score.correct);
+    $("wrong").textContent = String(score.wrong);
+    $("streak").textContent = String(score.streak);
+
+    const remaining = getPoolItems(knownSet).length;
+    $("remaining").textContent = String(remaining);
+
+    if (setupMode){
+      const item = DATA[setupIndex];
+      $("setupStatus").innerHTML =
+        `🧭 <b>Instelmodus</b>: klik nu op de kaart voor <b>#${item.id}</b> – ${item.country}. ` +
+        `(<span class="muted">${setupIndex+1}/${DATA.length}</span>)`;
+    } else {
+      $("setupStatus").textContent = placedCount() < DATA.length
+        ? "Nog niet alle markers gezet. Klik ‘Markers instellen’ om dit één keer te doen."
+        : "Alle markers zijn gezet ✅";
+    }
+  }
+
+  // === Setup wizard ===
+  function startSetup(){
+    setupMode = true;
+    editMode = false;
+    setupIndex = 0;
+    $("toggleEditBtn").textContent = "🧲 Sleep-modus";
+    setFeedback("good", "Instelmodus gestart. Klik op de kaart waar nummer 1 (Canada) staat.");
+    updateHintLine();
+    updateStats();
+  }
+
+  function stopSetup(){
+    setupMode = false;
+    setFeedback("good", "Instelmodus klaar ✅ Je kunt nu op nummers klikken om te oefenen.");
+    updateHintLine();
+    updateStats();
+  }
+
+  function placeMarkerAtClick(e){
+    if (!setupMode) return;
+
+    const overlay = $("overlay");
+    const rect = overlay.getBoundingClientRect();
+
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top)  / rect.height) * 100;
+
+    const item = DATA[setupIndex];
+    markers[String(item.id)] = { x: clamp(x, 0, 100), y: clamp(y, 0, 100) };
+    saveObj(KEY_MARKERS, markers);
+
+    setupIndex++;
+    renderMarkers();
+
+    if (setupIndex >= DATA.length){
+      stopSetup();
+    } else {
+      const next = DATA[setupIndex];
+      setFeedback("good", `Marker gezet ✅ Volgende: klik waar <b>#${next.id}</b> hoort (${next.country}).`);
+      updateHintLine();
+      updateStats();
+    }
+  }
+
+  // === Wire up ===
+  $("checkBtn").addEventListener("click", checkAnswer);
+  $("knownBtn").addEventListener("click", markKnown);
+  $("showBtn").addEventListener("click", showAnswer);
+  $("skipBtn").addEventListener("click", skip);
+  $("randomBtn").addEventListener("click", pickRandom);
+
+  $("answer").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") checkAnswer();
+    if (e.key === "Escape") $("answer").value = "";
+  });
+
+  $("mode").addEventListener("change", () => updateHintLine());
+  $("pool").addEventListener("change", () => updateStats());
+
+  $("setupBtn").addEventListener("click", () => startSetup());
+
+  $("toggleEditBtn").addEventListener("click", () => {
+    editMode = !editMode;
+    setupMode = false;
+    $("toggleEditBtn").textContent = editMode ? "🧲 Sleep-modus: aan" : "🧲 Sleep-modus";
+    setFeedback("good", editMode
+      ? "Sleep-modus aan: sleep nummers naar de juiste plek. (Klikken oefent tijdelijk niet.)"
+      : "Sleep-modus uit: klik nummers om te oefenen.");
+    updateHintLine();
+    updateStats();
+  });
+
+  $("resetKnownBtn").addEventListener("click", () => {
+    knownSet = new Set();
+    saveSet(KEY_KNOWN, knownSet);
+    renderMarkers();
+    renderTopCounts();
+    setFeedback("good", "Alle ‘gekend’ markeringen zijn gewist.");
+    updateStats();
+  });
+
+  $("resetMarkersBtn").addEventListener("click", () => {
+    markers = {};
+    saveObj(KEY_MARKERS, markers);
+    renderMarkers();
+    setFeedback("good", "Alle markers zijn gewist. Gebruik ‘Markers instellen’ om opnieuw te plaatsen.");
+    updateStats();
+  });
+
+  $("resetScoreBtn").addEventListener("click", () => {
+    score = { correct: 0, wrong: 0, streak: 0 };
+    clearFeedback();
+    updateStats();
+    $("answer").focus();
+  });
+
+  $("mapFile").addEventListener("change", (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setMapFromFile(file);
+    setFeedback("good", "Kaart geladen via bestand. (Tip: zet eventueel ook map.jpg naast dit HTML-bestand.)");
+  });
+
+  $("overlay").addEventListener("click", (e) => {
+    if (setupMode) placeMarkerAtClick(e);
+    // als niet setupMode: klik op lege plek doet niets (bewust)
+  });
+
+  // Init
+  (async function init(){
+    renderTopCounts();
+    updateStats();
+    updateHintLine();
+
+    const ok = await tryLoadDefaultMap();
+    if (!ok) {
+      // Geen map.jpg gevonden
+      setFeedback("bad",
+        "Ik kan <b>map.jpg</b> niet vinden in dezelfde map als deze HTML.<br/>" +
+        "➡️ Zet je kaartfoto daar neer als <b>map.jpg</b>, of kies je kaart via de bestandsknop."
+      );
+    } else {
+      setFeedback("good", "Kaart geladen (map.jpg). Tip: klik ‘Markers instellen’ om nummers te plaatsen.");
+    }
+
+    renderMarkers();
+    updateStats();
+  })();
+
+})();
+</script>
+</body>
+</html>
+``

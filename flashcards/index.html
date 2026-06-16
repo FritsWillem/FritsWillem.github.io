@@ -2,334 +2,587 @@
 <html lang="nl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Flashcards EN-NL / NL-EN</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flashcards Engels - Nederlands</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      text-align: center;
-      background: #f4f4f4;
-      padding: 32px 16px;
+      background: #f4f6f8;
+      color: #222;
+      margin: 0;
+      padding: 0;
     }
+
     .container {
-      max-width: 520px;
-      margin: 0 auto;
+      max-width: 950px;
+      margin: 30px auto;
+      padding: 20px;
     }
-    h1 { margin-top: 0; }
-    .meta {
+
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      text-align: center;
       color: #666;
-      font-size: 14px;
-      margin: 8px 0 18px;
-      line-height: 1.4;
+      margin-bottom: 25px;
     }
+
     .controls {
       display: flex;
-      gap: 10px;
-      justify-content: center;
       flex-wrap: wrap;
-      margin-bottom: 16px;
-    }
-    select, button {
-      padding: 10px 12px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    .card {
-      background: white;
-      margin: 0 auto 10px;
-      padding: 28px 20px;
-      border-radius: 12px;
-      font-size: 24px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.10);
-      cursor: pointer;
-      user-select: none;
-      line-height: 1.35;
-      min-height: 110px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .knownRow {
-      display: flex;
-      justify-content: center;
-      align-items: center;
       gap: 10px;
-      margin-bottom: 10px;
-      color: #333;
-      font-size: 14px;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 20px;
     }
-    .knownRow input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
+
+    button, select, label {
+      font-size: 16px;
+    }
+
+    select {
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      background: white;
+    }
+
+    button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      background: #0a66c2;
+      color: white;
       cursor: pointer;
     }
-    .statusline {
+
+    button:hover {
+      background: #084f96;
+    }
+
+    button.danger {
+      background: #c0392b;
+    }
+
+    button.danger:hover {
+      background: #992d22;
+    }
+
+    .statusbar {
+      text-align: center;
+      margin-bottom: 18px;
       color: #444;
-      font-size: 14px;
-      margin-top: 8px;
+      font-size: 18px;
     }
-    .hint {
-      font-size: 12px;
+
+    .flashcard {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      padding: 40px 25px;
+      text-align: center;
+      min-height: 240px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .label {
+      font-size: 14px;
       color: #777;
-      margin-top: 4px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
-    kbd {
-      background: #eee;
-      border-radius: 4px;
-      padding: 2px 6px;
-      border: 1px solid #ddd;
-      font-size: 12px;
+
+    .word {
+      font-size: 34px;
+      font-weight: bold;
+      margin-bottom: 16px;
+      word-break: break-word;
     }
-    .emptyState {
-      color: #555;
+
+    .translation {
+      font-size: 24px;
+      color: #0a66c2;
+      min-height: 34px;
+      word-break: break-word;
+    }
+
+    .checkbox-row {
+      display: flex;
+      justify-content: center;
+      margin: 15px 0 25px;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .known-list {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+      margin-top: 20px;
+    }
+
+    .known-list h2 {
+      margin-top: 0;
+      font-size: 20px;
+    }
+
+    .known-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tag {
+      background: #e8f1fb;
+      color: #0a66c2;
+      padding: 6px 10px;
+      border-radius: 999px;
       font-size: 14px;
-      margin-top: 10px;
+    }
+
+    .empty {
+      color: #777;
+      font-style: italic;
+    }
+
+    @media (max-width: 600px) {
+      .word {
+        font-size: 28px;
+      }
+
+      .translation {
+        font-size: 20px;
+      }
+
+      .controls {
+        flex-direction: column;
+      }
+
+      button, select {
+        width: 100%;
+        max-width: 320px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>📘 Flashcards</h1>
-
-    <div class="meta">
-      Kies de richting: <b>Engels → Nederlands</b> of <b>Nederlands → Engels</b>.<br/>
-      Klik op de kaart om te flippen.
-    </div>
+    <h1>Flashcards Engels - Nederlands</h1>
+    <div class="subtitle">Oefen woorden in beide richtingen en vink woorden af die je al kent.</div>
 
     <div class="controls">
-      <select id="direction" onchange="setDirection(this.value)">
-        <option value="EN_NL">Engels → Nederlands</option>
-        <option value="NL_EN">Nederlands → Engels</option>
+      <select id="directionSelect">
+        <option value="en-nl">Engels → Nederlands</option>
+        <option value="nl-en">Nederlands → Engels</option>
       </select>
 
-      <button onclick="prevCard()">Vorige</button>
-      <button onclick="nextCard()">Volgende</button>
-      <button onclick="shuffleCards()">Shuffle</button>
-      <button onclick="resetOrder()">Reset</button>
-      <button onclick="clearKnown()">Bekenden wissen</button>
+      <button id="showAnswerBtn">Toon antwoord</button>
+      <button id="nextBtn">Volgend woord</button>
+      <button id="resetKnownBtn" class="danger">Reset bekende woorden</button>
     </div>
 
-    <div class="card" onclick="flipCard()" title="Klik om te flippen">
-      <div id="cardText">experiment</div>
+    <div class="statusbar">
+      Nog te oefenen woorden: <strong id="remainingCount">0</strong>
     </div>
 
-    <div class="knownRow">
-      <label style="display:flex; align-items:center; gap:8px;">
-        <input id="knownCheckbox" type="checkbox" onchange="toggleKnown(this.checked)" />
-        Ik ken dit woord (niet meer vragen)
-      </label>
+    <div class="flashcard">
+      <div class="label" id="questionLabel">Engels</div>
+      <div class="word" id="questionWord">-</div>
+      <div class="translation" id="answerWord">&nbsp;</div>
     </div>
 
-    <div class="statusline" id="statusLine"></div>
-    <div class="emptyState" id="emptyState" style="display:none;"></div>
+    <div class="checkbox-row">
+      <input type="checkbox" id="knownCheckbox" />
+      <label for="knownCheckbox">Dit woord ken ik al</label>
+    </div>
 
-    <div class="hint">
-      Sneltoetsen: <kbd>Spatie</kbd> flip • <kbd>←</kbd> vorige • <kbd>→</kbd> volgende
+    <div class="known-list">
+      <h2>Bekende woorden</h2>
+      <div id="knownItems" class="known-items"></div>
     </div>
   </div>
 
   <script>
-    // Nieuwe woordenlijst (van jouw foto)
-    const baseCards = [
-      { en: "experiment",     nl: "experiment" },
-      { en: "consideration",  nl: "overweging" },
-      { en: "strange",        nl: "vreemd" },
-      { en: "code",           nl: "code" },
-      { en: "possibly",       nl: "mogelijk" },
-      { en: "threat",         nl: "bedreiging" },
-      { en: "accident",       nl: "ongeluk" },
-      { en: "impossible",     nl: "onmogelijk" },
-      { en: "revenue",        nl: "omzet" },
-      { en: "to enable",      nl: "mogelijk maken" },
-      { en: "afraid",         nl: "bang" },
-      { en: "active",         nl: "actief" },
-      { en: "to conclude",    nl: "concluderen" },
-      { en: "religious",      nl: "religieus; godsdienstig" },
-      { en: "cancer",         nl: "kanker" },
-      { en: "to convince",    nl: "overtuigen" },
-      { en: "to vary",        nl: "variëren" },
-      { en: "environmental",  nl: "milieu" },
-      { en: "sun",            nl: "zon" },
-      { en: "healthy",        nl: "gezond" }
+    const words = [
+      { id: 1301, en: "to settle", nl: "afrekenen; regelen" },
+      { id: 1302, en: "boat", nl: "boot" },
+      { id: 1303, en: "aid", nl: "steun; hulp" },
+      { id: 1304, en: "fan", nl: "ventilator; fan" },
+      { id: 1305, en: "kitchen", nl: "keuken" },
+      { id: 1306, en: "twice", nl: "tweemaal" },
+      { id: 1307, en: "fresh", nl: "vers" },
+      { id: 1308, en: "delay", nl: "vertraging" },
+      { id: 1309, en: "safety", nl: "veiligheid" },
+      { id: 1310, en: "engineer", nl: "ingenieur; technicus" },
+      { id: 1311, en: "quiet", nl: "rustig" },
+
+      { id: 1312, en: "insurance", nl: "verzekering" },
+      { id: 1313, en: "nurse", nl: "verpleegster; verpleegkundige" },
+      { id: 1314, en: "to divide", nl: "verdelen" },
+      { id: 1315, en: "length", nl: "lengte" },
+      { id: 1316, en: "investigation", nl: "onderzoek" },
+      { id: 1317, en: "package", nl: "pakket" },
+      { id: 1318, en: "somewhere", nl: "ergens" },
+      { id: 1319, en: "to expand", nl: "uitbreiden" },
+      { id: 1320, en: "to commit", nl: "begaan" },
+      { id: 1321, en: "obvious", nl: "voor de hand liggend" },
+      { id: 1322, en: "to jump", nl: "springen" },
+      { id: 1323, en: "weapon", nl: "wapen" },
+      { id: 1324, en: "relatively", nl: "naar verhouding" },
+      { id: 1325, en: "host", nl: "gastheer" },
+      { id: 1326, en: "winter", nl: "winter" },
+      { id: 1327, en: "district", nl: "wijk; gebied" },
+      { id: 1328, en: "broad", nl: "breed" },
+      { id: 1329, en: "tire", nl: "band" },
+      { id: 1330, en: "spring", nl: "lente" },
+      { id: 1331, en: "spirit", nl: "geest" },
+      { id: 1332, en: "lunch", nl: "lunch" },
+      { id: 1333, en: "actual", nl: "actueel; eigenlijke; werkelijke" },
+      { id: 1334, en: "pool", nl: "zwembad" },
+      { id: 1335, en: "battle", nl: "strijd" },
+      { id: 1336, en: "tradition", nl: "traditie" },
+      { id: 1337, en: "cash", nl: "contant geld" },
+      { id: 1338, en: "hardly", nl: "nauwelijks" },
+      { id: 1339, en: "award", nl: "prijs" },
+      { id: 1340, en: "coach", nl: "trainer" },
+      { id: 1341, en: "experiment", nl: "experiment" },
+      { id: 1342, en: "consideration", nl: "overweging" },
+      { id: 1343, en: "strange", nl: "vreemd" },
+      { id: 1344, en: "code", nl: "code" },
+      { id: 1345, en: "possibly", nl: "mogelijk" },
+      { id: 1346, en: "threat", nl: "bedreiging" },
+      { id: 1347, en: "accident", nl: "ongeluk" },
+      { id: 1348, en: "impossible", nl: "onmogelijk" },
+      { id: 1349, en: "revenue", nl: "omzet" },
+      { id: 1350, en: "to enable", nl: "mogelijk maken" },
+      { id: 1351, en: "afraid", nl: "bang" },
+      { id: 1352, en: "active", nl: "actief" },
+      { id: 1353, en: "to conclude", nl: "concluderen" },
+      { id: 1354, en: "religious", nl: "religieus; godsdienstig" },
+      { id: 1355, en: "cancer", nl: "kanker" },
+      { id: 1356, en: "to convince", nl: "overtuigen" },
+      { id: 1357, en: "to vary", nl: "variëren" },
+      { id: 1358, en: "environmental", nl: "milieu" },
+      { id: 1359, en: "sun", nl: "zon" },
+      { id: 1360, en: "healthy", nl: "gezond" },
+      { id: 1361, en: "to blow", nl: "blazen; waaien" },
+      { id: 1362, en: "volume", nl: "volume" },
+      { id: 1363, en: "location", nl: "plaats" },
+
+      { id: 1364, en: "to invest", nl: "investeren" },
+      { id: 1365, en: "to proceed", nl: "doorgaan" },
+      { id: 1366, en: "to wash", nl: "wassen" },
+      { id: 1367, en: "actor", nl: "acteur" },
+      { id: 1368, en: "glad", nl: "blij" },
+      { id: 1369, en: "tape", nl: "plakband" },
+      { id: 1370, en: "whereas", nl: "terwijl" },
+      { id: 1371, en: "opposite", nl: "tegenover" },
+      { id: 1372, en: "stone", nl: "steen" },
+      { id: 1373, en: "sum", nl: "som" },
+      { id: 1374, en: "murder", nl: "moord" },
+      { id: 1375, en: "(to) monitor", nl: "monitor; in de gaten houden" },
+      { id: 1376, en: "soldier", nl: "soldaat" },
+      { id: 1377, en: "finance", nl: "financiën" },
+      { id: 1378, en: "to hate", nl: "een hekel hebben aan" },
+      { id: 1379, en: "egg", nl: "ei" },
+      { id: 1380, en: "concert", nl: "concert" },
+      { id: 1381, en: "(to) shock", nl: "schok; schrik; schokken" },
+      { id: 1382, en: "comfortable", nl: "comfortabel" },
+      { id: 1383, en: "usual", nl: "gebruikelijk" },
+      { id: 1384, en: "carefully", nl: "voorzichtig" },
+      { id: 1385, en: "(to) pack", nl: "pak; inpakken" },
+      { id: 1386, en: "to recall", nl: "terugroepen; in herinnering brengen; herinneren" },
+      { id: 1387, en: "wine", nl: "wijn" },
+      { id: 1388, en: "camera", nl: "camera" },
+      { id: 1389, en: "to swim", nl: "zwemmen" },
+
+      { id: 1390, en: "to manufacture", nl: "vervaardigen" },
+      { id: 1391, en: "theater", nl: "theater; schouwburg" },
+      { id: 1392, en: "to cycle", nl: "fietsen" },
+      { id: 1393, en: "coffee", nl: "koffie" },
+      { id: 1394, en: "totally", nl: "helemaal" },
+      { id: 1395, en: "museum", nl: "museum" },
+      { id: 1396, en: "visitor", nl: "bezoeker" },
+      { id: 1397, en: "freedom", nl: "vrijheid" },
+      { id: 1398, en: "construction", nl: "bouw; constructie" },
+      { id: 1399, en: "dear", nl: "beste; lieve" },
+      { id: 1400, en: "objective", nl: "doelstelling; onpartijdig; objectief" },
+      { id: 1401, en: "moreover", nl: "bovendien" },
+      { id: 1402, en: "onto", nl: "op" },
+      { id: 1403, en: "historical", nl: "historisch" },
+      { id: 1404, en: "to oppose", nl: "zich verzetten tegen" },
+      { id: 1405, en: "branch", nl: "afdeling; tak" },
+      { id: 1406, en: "vehicle", nl: "voertuig" },
+      { id: 1407, en: "scientist", nl: "wetenschapper" },
+      { id: 1408, en: "route", nl: "route" },
+      { id: 1409, en: "to bind", nl: "binden; vastbinden" },
+      { id: 1410, en: "to belong", nl: "behoren; toebehoren; horen" },
+      { id: 1411, en: "(to) taste", nl: "smaak; proeven; smaken" },
+      { id: 1412, en: "tonight", nl: "vanavond" },
+      { id: 1413, en: "fashion", nl: "mode" },
+      { id: 1414, en: "danger", nl: "gevaar" },
+      { id: 1415, en: "bomb", nl: "bom" },
+
+      { id: 1416, en: "army", nl: "leger" },
+      { id: 1417, en: "dangerous", nl: "gevaarlijk" },
+      { id: 1418, en: "to decrease", nl: "kleiner worden; afnemen" },
+      { id: 1419, en: "to hurt", nl: "pijn doen; zeer doen" },
+      { id: 1420, en: "council", nl: "raad" },
+      { id: 1421, en: "editor", nl: "redacteur" },
+      { id: 1422, en: "normally", nl: "normaal gesproken" },
+      { id: 1423, en: "sight", nl: "zicht" },
+      { id: 1424, en: "to generate", nl: "genereren; produceren; teweegbrengen" },
+      { id: 1425, en: "gift", nl: "geschenk" },
+      { id: 1426, en: "delivery", nl: "levering" },
+      { id: 1427, en: "to deny", nl: "ontkennen" },
+      { id: 1428, en: "guest", nl: "gast" },
+      { id: 1429, en: "anybody", nl: "iemand; wie ook maar" },
+      { id: 1430, en: "bedroom", nl: "slaapkamer" },
+      { id: 1431, en: "quote", nl: "citaat" },
+      { id: 1432, en: "to climb", nl: "beklimmen" },
+      { id: 1433, en: "basically", nl: "eigenlijk" },
+      { id: 1434, en: "violence", nl: "geweld" },
+      { id: 1435, en: "minister", nl: "minister; predikant" },
+      { id: 1436, en: "mainly", nl: "hoofdzakelijk" },
+      { id: 1437, en: "mouth", nl: "mond" },
+      { id: 1438, en: "noise", nl: "lawaai" },
+      { id: 1439, en: "manner", nl: "manier" },
+      { id: 1440, en: "gun", nl: "geweer; pistool" },
+      { id: 1441, en: "square", nl: "vierkant; plein" },
+
+      { id: 1442, en: "occasion", nl: "gelegenheid" },
+      { id: 1443, en: "familiar", nl: "bekend" },
+      { id: 1444, en: "to ignore", nl: "negeren" },
+      { id: 1445, en: "to destroy", nl: "vernietigen" },
+      { id: 1446, en: "affair", nl: "affaire; zaak; gebeuren" },
+      { id: 1447, en: "civil", nl: "civiel; burgerlijk" },
+      { id: 1448, en: "to locate", nl: "zich bevinden; vinden" },
+      { id: 1449, en: "citizen", nl: "inwoner" },
+      { id: 1450, en: "temperature", nl: "temperatuur" },
+      { id: 1451, en: "gold", nl: "goud" },
+      { id: 1452, en: "domestic", nl: "huiselijk; huis-" },
+      { id: 1453, en: "(to) load", nl: "laden; lading" },
+      { id: 1454, en: "belief", nl: "geloof" },
+      { id: 1455, en: "troop", nl: "troep; zwerm" },
+      { id: 1456, en: "technical", nl: "technisch" },
+      { id: 1457, en: "to remind", nl: "herinneren" },
+      { id: 1458, en: "arrangement", nl: "arrangement; regeling" },
+      { id: 1459, en: "skin", nl: "huid" },
+      { id: 1460, en: "prison", nl: "gevangenis" },
+      { id: 1461, en: "to switch", nl: "schakelaar; wisselen" },
+      { id: 1462, en: "to acquire", nl: "verkrijgen" },
+      { id: 1463, en: "corporate", nl: "zakelijk" },
+      { id: 1464, en: "fairly", nl: "redelijk; tamelijk" },
+      { id: 1465, en: "wood", nl: "hout" },
+      { id: 1466, en: "to participate", nl: "deelnemen" },
+      { id: 1467, en: "tough", nl: "moeilijk" },
+
+      { id: 1468, en: "(to) tear", nl: "scheur; traan; scheuren" },
+      { id: 1469, en: "representative", nl: "vertegenwoordiger; representatief" },
+      { id: 1470, en: "capacity", nl: "capaciteit" },
+      { id: 1471, en: "border", nl: "grens" },
+      { id: 1472, en: "to shake", nl: "schudden" },
+      { id: 1473, en: "assessment", nl: "beoordeling" },
+      { id: 1474, en: "shoe", nl: "schoen" },
+      { id: 1475, en: "ought", nl: "zou moeten" },
+      { id: 1476, en: "ad", nl: "advertentie" },
+      { id: 1477, en: "fee", nl: "vergoeding" },
+      { id: 1478, en: "hall", nl: "hal" },
+      { id: 1479, en: "regulation", nl: "regel" },
+      { id: 1480, en: "to escape", nl: "ontsnappen" },
+      { id: 1481, en: "studio", nl: "studio" },
+      { id: 1482, en: "proper", nl: "gepast; fatsoenlijk" },
+      { id: 1483, en: "to relax", nl: "zich ontspannen; tot rust komen; relaxen" },
+      { id: 1484, en: "tourist", nl: "toerist" },
+      { id: 1485, en: "component", nl: "component; bestanddeel" },
+      { id: 1486, en: "to afford", nl: "zich veroorloven" },
+      { id: 1487, en: "lawyer", nl: "advocaat" },
+      { id: 1488, en: "suspect", nl: "verdachte" },
+      { id: 1489, en: "cup", nl: "kop; kopje" },
+      { id: 1490, en: "description", nl: "omschrijving" },
+      { id: 1491, en: "confidence", nl: "vertrouwen" },
+      { id: 1492, en: "industrial", nl: "industrieel" },
+      { id: 1493, en: "to complain", nl: "klagen" },
+      { id: 1494, en: "perspective", nl: "perspectief" },
+      { id: 1495, en: "error", nl: "fout" },
+      { id: 1496, en: "arrest", nl: "arrestatie" },
+      { id: 1497, en: "to assess", nl: "beoordelen" },
+      { id: 1498, en: "(to) register", nl: "registreren; register-" },
+      { id: 1499, en: "asset", nl: "(bedrijfs)middel" },
+      { id: 1500, en: "(to) signal", nl: "signaal; sein; seinen" }
     ];
 
-    // ---------------------------
-    // Bekend-woorden functionaliteit
-    // ---------------------------
-    const STORAGE_KEY = "flashcards_known_v1";
+    const STORAGE_KEY = "flashcards_known_words_v2";
 
-    function cardId(card) {
-      // Unieke sleutel per kaart
-      return `${card.en}||${card.nl}`;
+    const directionSelect = document.getElementById("directionSelect");
+    const showAnswerBtn = document.getElementById("showAnswerBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const resetKnownBtn = document.getElementById("resetKnownBtn");
+    const questionLabel = document.getElementById("questionLabel");
+    const questionWord = document.getElementById("questionWord");
+    const answerWord = document.getElementById("answerWord");
+    const knownCheckbox = document.getElementById("knownCheckbox");
+    const remainingCount = document.getElementById("remainingCount");
+    const knownItems = document.getElementById("knownItems");
+
+    let currentWord = null;
+    let answerVisible = false;
+
+    function getKnownWords() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : [];
     }
 
-    function loadKnownSet() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        const arr = raw ? JSON.parse(raw) : [];
-        return new Set(arr);
-      } catch {
-        return new Set();
-      }
+    function saveKnownWords(ids) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
     }
 
-    function saveKnownSet() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify([...knownSet]));
+    function getUnknownWords() {
+      const knownIds = getKnownWords();
+      return words.filter(word => !knownIds.includes(word.id));
     }
 
-    let knownSet = loadKnownSet();
-
-    // Deck: we filteren bekende woorden eruit (dus worden niet meer gevraagd)
-    let deck = [];
-    let index = 0;
-    let showingFront = true;
-
-    // Richting: EN_NL (front=EN back=NL) of NL_EN (front=NL back=EN)
-    let direction = "EN_NL";
-
-    const cardTextEl = document.getElementById("cardText");
-    const statusLineEl = document.getElementById("statusLine");
-    const directionEl = document.getElementById("direction");
-    const knownCheckboxEl = document.getElementById("knownCheckbox");
-    const emptyStateEl = document.getElementById("emptyState");
-
-    function frontText(card) {
-      return direction === "EN_NL" ? card.en : card.nl;
-    }
-
-    function backText(card) {
-      return direction === "EN_NL" ? card.nl : card.en;
-    }
-
-    function rebuildDeck(keepCurrent = true) {
-      const currentId = deck.length > 0 ? cardId(deck[index]) : null;
-
-      deck = baseCards.filter(c => !knownSet.has(cardId(c)));
-
-      // Als we de huidige kaart willen behouden (en die bestaat nog), dan index daarop zetten
-      if (keepCurrent && currentId) {
-        const newIndex = deck.findIndex(c => cardId(c) === currentId);
-        index = newIndex >= 0 ? newIndex : 0;
-      } else {
-        index = 0;
-      }
-
-      renderCard();
-    }
-
-    function updateStatus() {
-      const totalAll = baseCards.length;
-      const knownCount = knownSet.size;
-      const totalActive = deck.length;
-      const dirLabel = direction === "EN_NL" ? "Engels → Nederlands" : "Nederlands → Engels";
-
-      if (totalActive > 0) {
-        statusLineEl.textContent = `${dirLabel} • kaart ${index + 1} van ${totalActive} • bekend: ${knownCount} • totaal: ${totalAll}`;
-      } else {
-        statusLineEl.textContent = `${dirLabel} • bekend: ${knownCount} • totaal: ${totalAll}`;
-      }
-    }
-
-    function syncKnownCheckbox() {
-      if (deck.length === 0) {
-        knownCheckboxEl.checked = false;
-        knownCheckboxEl.disabled = true;
-        return;
-      }
-      knownCheckboxEl.disabled = false;
-      const id = cardId(deck[index]);
-      knownCheckboxEl.checked = knownSet.has(id);
-    }
-
-    function renderCard() {
-      showingFront = true;
-
-      if (deck.length === 0) {
-        cardTextEl.textContent = "🎉 Alles bekend!";
-        emptyStateEl.style.display = "block";
-        emptyStateEl.textContent = "Je hebt alle woorden als 'bekend' aangevinkt. Klik op 'Bekenden wissen' om opnieuw te beginnen.";
-        syncKnownCheckbox();
-        updateStatus();
-        return;
-      }
-
-      emptyStateEl.style.display = "none";
-      cardTextEl.textContent = frontText(deck[index]);
-      syncKnownCheckbox();
-      updateStatus();
-    }
-
-    function flipCard() {
-      if (deck.length === 0) return;
-      const card = deck[index];
-      cardTextEl.textContent = showingFront ? backText(card) : frontText(card);
-      showingFront = !showingFront;
-    }
-
-    function nextCard() {
-      if (deck.length === 0) return;
-      index = (index + 1) % deck.length;
-      renderCard();
-    }
-
-    function prevCard() {
-      if (deck.length === 0) return;
-      index = (index - 1 + deck.length) % deck.length;
-      renderCard();
-    }
-
-    function shuffleCards() {
-      if (deck.length === 0) return;
-      for (let i = deck.length - 1; i > 0; i--) {
+    function shuffle(array) {
+      const copy = [...array];
+      for (let i = copy.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [deck[i], deck[j]] = [deck[j], deck[i]];
+        [copy[i], copy[j]] = [copy[j], copy[i]];
       }
-      index = 0;
-      renderCard();
+      return copy;
     }
 
-    function resetOrder() {
-      // Reset = opnieuw opbouwen (bekenden blijven bekend!)
-      rebuildDeck(false);
+    function updateRemainingCount() {
+      remainingCount.textContent = getUnknownWords().length;
     }
 
-    function setDirection(newDir) {
-      direction = newDir;
-      renderCard();
+    function updateKnownList() {
+      const knownIds = getKnownWords();
+      const knownWords = words.filter(w => knownIds.includes(w.id));
+
+      knownItems.innerHTML = "";
+
+      if (knownWords.length === 0) {
+        const p = document.createElement("div");
+        p.className = "empty";
+        p.textContent = "Nog geen woorden aangevinkt.";
+        knownItems.appendChild(p);
+        return;
+      }
+
+      knownWords
+        .sort((a, b) => a.id - b.id)
+        .forEach(word => {
+          const span = document.createElement("span");
+          span.className = "tag";
+          span.textContent = `${word.en} = ${word.nl}`;
+          knownItems.appendChild(span);
+        });
     }
 
-    function toggleKnown(isChecked) {
-      if (deck.length === 0) return;
+    function setCard(word, showAnswer = false) {
+      currentWord = word;
+      answerVisible = showAnswer;
 
-      const id = cardId(deck[index]);
+      const direction = directionSelect.value;
 
-      if (isChecked) {
-        knownSet.add(id);
+      if (direction === "en-nl") {
+        questionLabel.textContent = "Engels";
+        questionWord.textContent = word.en;
+        answerWord.textContent = showAnswer ? word.nl : " ";
       } else {
-        knownSet.delete(id);
+        questionLabel.textContent = "Nederlands";
+        questionWord.textContent = word.nl;
+        answerWord.textContent = showAnswer ? word.en : " ";
       }
-      saveKnownSet();
 
-      // Belangrijk: deck opnieuw bouwen (want bekende woorden moeten verdwijnen)
-      rebuildDeck(false);
+      const knownIds = getKnownWords();
+      knownCheckbox.checked = knownIds.includes(word.id);
+      updateRemainingCount();
     }
 
-    function clearKnown() {
-      knownSet = new Set();
-      saveKnownSet();
-      rebuildDeck(false);
+    function pickNextWord() {
+      const unknownWords = getUnknownWords();
+
+      if (unknownWords.length === 0) {
+        currentWord = null;
+        questionLabel.textContent = "Klaar";
+        questionWord.textContent = "Alle woorden zijn bekend 🎉";
+        answerWord.textContent = "Gebruik 'Reset bekende woorden' om opnieuw te beginnen.";
+        knownCheckbox.checked = false;
+        updateRemainingCount();
+        updateKnownList();
+        return;
+      }
+
+      const candidates = shuffle(unknownWords);
+
+      let next = candidates[0];
+      if (currentWord && candidates.length > 1 && candidates[0].id === currentWord.id) {
+        next = candidates[1];
+      }
+
+      setCard(next, false);
+      updateKnownList();
     }
 
-    // Keyboard support
-    document.addEventListener("keydown", (e) => {
-      if (e.code === "Space") { e.preventDefault(); flipCard(); }
-      if (e.code === "ArrowRight") nextCard();
-      if (e.code === "ArrowLeft") prevCard();
+    showAnswerBtn.addEventListener("click", () => {
+      if (!currentWord) return;
+      setCard(currentWord, true);
     });
 
-    // Init
-    directionEl.value = direction;
-    rebuildDeck(false);
+    nextBtn.addEventListener("click", () => {
+      pickNextWord();
+    });
+
+    directionSelect.addEventListener("change", () => {
+      if (!currentWord) {
+        pickNextWord();
+        return;
+      }
+      setCard(currentWord, answerVisible);
+    });
+
+    knownCheckbox.addEventListener("change", () => {
+      if (!currentWord) return;
+
+      let knownIds = getKnownWords();
+
+      if (knownCheckbox.checked) {
+        if (!knownIds.includes(currentWord.id)) {
+          knownIds.push(currentWord.id);
+        }
+      } else {
+        knownIds = knownIds.filter(id => id !== currentWord.id);
+      }
+
+      saveKnownWords(knownIds);
+      updateRemainingCount();
+      updateKnownList();
+
+      if (knownCheckbox.checked) {
+        setTimeout(() => {
+          pickNextWord();
+        }, 150);
+      }
+    });
+
+    resetKnownBtn.addEventListener("click", () => {
+      localStorage.removeItem(STORAGE_KEY);
+      updateKnownList();
+      pickNextWord();
+    });
+
+    updateKnownList();
+    pickNextWord();
   </script>
 </body>
 </html>

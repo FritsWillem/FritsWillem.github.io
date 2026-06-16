@@ -89,6 +89,13 @@
       flex-direction: column;
       justify-content: center;
       margin-bottom: 20px;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .flashcard:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 28px rgba(0,0,0,0.10);
     }
 
     .label {
@@ -177,7 +184,7 @@
 <body>
   <div class="container">
     <h1>Flashcards Engels - Nederlands</h1>
-    <div class="subtitle">Oefen woorden in beide richtingen en vink woorden af die je al kent.</div>
+    <div class="subtitle">Klik op de kaart om het antwoord te tonen of te verbergen.</div>
 
     <div class="controls">
       <select id="directionSelect">
@@ -194,7 +201,7 @@
       Nog te oefenen woorden: <strong id="remainingCount">0</strong>
     </div>
 
-    <div class="flashcard">
+    <div class="flashcard" id="flashcard">
       <div class="label" id="questionLabel">Engels</div>
       <div class="word" id="questionWord">-</div>
       <div class="translation" id="answerWord">&nbsp;</div>
@@ -433,6 +440,7 @@
     const knownCheckbox = document.getElementById("knownCheckbox");
     const remainingCount = document.getElementById("remainingCount");
     const knownItems = document.getElementById("knownItems");
+    const flashcard = document.getElementById("flashcard");
 
     let currentWord = null;
     let answerVisible = false;
@@ -509,80 +517,14 @@
       updateRemainingCount();
     }
 
+    function toggleAnswer() {
+      if (!currentWord) return;
+      setCard(currentWord, !answerVisible);
+    }
+
     function pickNextWord() {
       const unknownWords = getUnknownWords();
 
       if (unknownWords.length === 0) {
         currentWord = null;
         questionLabel.textContent = "Klaar";
-        questionWord.textContent = "Alle woorden zijn bekend 🎉";
-        answerWord.textContent = "Gebruik 'Reset bekende woorden' om opnieuw te beginnen.";
-        knownCheckbox.checked = false;
-        updateRemainingCount();
-        updateKnownList();
-        return;
-      }
-
-      const candidates = shuffle(unknownWords);
-
-      let next = candidates[0];
-      if (currentWord && candidates.length > 1 && candidates[0].id === currentWord.id) {
-        next = candidates[1];
-      }
-
-      setCard(next, false);
-      updateKnownList();
-    }
-
-    showAnswerBtn.addEventListener("click", () => {
-      if (!currentWord) return;
-      setCard(currentWord, true);
-    });
-
-    nextBtn.addEventListener("click", () => {
-      pickNextWord();
-    });
-
-    directionSelect.addEventListener("change", () => {
-      if (!currentWord) {
-        pickNextWord();
-        return;
-      }
-      setCard(currentWord, answerVisible);
-    });
-
-    knownCheckbox.addEventListener("change", () => {
-      if (!currentWord) return;
-
-      let knownIds = getKnownWords();
-
-      if (knownCheckbox.checked) {
-        if (!knownIds.includes(currentWord.id)) {
-          knownIds.push(currentWord.id);
-        }
-      } else {
-        knownIds = knownIds.filter(id => id !== currentWord.id);
-      }
-
-      saveKnownWords(knownIds);
-      updateRemainingCount();
-      updateKnownList();
-
-      if (knownCheckbox.checked) {
-        setTimeout(() => {
-          pickNextWord();
-        }, 150);
-      }
-    });
-
-    resetKnownBtn.addEventListener("click", () => {
-      localStorage.removeItem(STORAGE_KEY);
-      updateKnownList();
-      pickNextWord();
-    });
-
-    updateKnownList();
-    pickNextWord();
-  </script>
-</body>
-</html>

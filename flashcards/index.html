@@ -528,3 +528,78 @@
       if (unknownWords.length === 0) {
         currentWord = null;
         questionLabel.textContent = "Klaar";
+        questionWord.textContent = "Alle woorden zijn bekend 🎉";
+        answerWord.textContent = "Gebruik 'Reset bekende woorden' om opnieuw te beginnen.";
+        knownCheckbox.checked = false;
+        updateRemainingCount();
+        updateKnownList();
+        return;
+      }
+
+      const candidates = shuffle(unknownWords);
+
+      let next = candidates[0];
+      if (currentWord && candidates.length > 1 && candidates[0].id === currentWord.id) {
+        next = candidates[1];
+      }
+
+      setCard(next, false);
+      updateKnownList();
+    }
+
+    showAnswerBtn.addEventListener("click", () => {
+      toggleAnswer();
+    });
+
+    nextBtn.addEventListener("click", () => {
+      pickNextWord();
+    });
+
+    flashcard.addEventListener("click", () => {
+      toggleAnswer();
+    });
+
+    directionSelect.addEventListener("change", () => {
+      if (!currentWord) {
+        pickNextWord();
+        return;
+      }
+      setCard(currentWord, answerVisible);
+    });
+
+    knownCheckbox.addEventListener("change", () => {
+      if (!currentWord) return;
+
+      let knownIds = getKnownWords();
+
+      if (knownCheckbox.checked) {
+        if (!knownIds.includes(currentWord.id)) {
+          knownIds.push(currentWord.id);
+        }
+      } else {
+        knownIds = knownIds.filter(id => id !== currentWord.id);
+      }
+
+      saveKnownWords(knownIds);
+      updateRemainingCount();
+      updateKnownList();
+
+      if (knownCheckbox.checked) {
+        setTimeout(() => {
+          pickNextWord();
+        }, 150);
+      }
+    });
+
+    resetKnownBtn.addEventListener("click", () => {
+      localStorage.removeItem(STORAGE_KEY);
+      updateKnownList();
+      pickNextWord();
+    });
+
+    updateKnownList();
+    pickNextWord();
+  </script>
+</body>
+</html>
+``
